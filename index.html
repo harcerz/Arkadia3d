@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>Arkadia 3D — klient MUD</title>
+  <meta name="description" content="Trójwymiarowy klient przeglądarkowy MUD-a Arkadia (arkadia.rpg.pl).">
+  <meta name="theme-color" content="#101018">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./js/vendor/three.module.min.js",
+        "three/addons/controls/OrbitControls.js": "./js/vendor/OrbitControls.js"
+      }
+    }
+  </script>
+</head>
+<body data-view="diorama">
+
+  <header class="topbar">
+    <div class="location" id="location">Arkadia 3D</div>
+    <div class="status-bars" id="statusBars"></div>
+    <nav class="view-toggle" id="viewToggle">
+      <button type="button" data-view="diorama" title="Widok izometryczny">◇</button>
+      <button type="button" data-view="fpp" title="Widok pierwszoosobowy">👁</button>
+      <button type="button" data-view="console" title="Pełna konsola">≣</button>
+    </nav>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="canvas3d"></canvas>
+    <div class="joystick" id="joystick" hidden>
+      <div class="joystick-knob"></div>
+    </div>
+    <div class="toast" id="toast" hidden></div>
+  </main>
+
+  <section class="console" id="console">
+    <div class="console-lines" id="consoleLines"></div>
+  </section>
+
+  <footer class="controls">
+    <div class="quick-buttons" id="quickButtons"></div>
+    <div class="input-row">
+      <input id="commandInput" type="text" autocomplete="off" autocapitalize="off"
+             autocorrect="off" spellcheck="false" placeholder="wpisz komendę…">
+      <button type="button" id="sendBtn" title="Wyślij">➤</button>
+    </div>
+  </footer>
+
+  <div class="connect-overlay" id="connectScreen">
+    <div class="connect-card">
+      <h1>Arkadia&nbsp;3D</h1>
+      <p class="connect-sub">Nieoficjalny trójwymiarowy klient MUD-a
+        <a href="https://arkadia.rpg.pl" target="_blank" rel="noopener">arkadia.rpg.pl</a></p>
+      <label class="connect-row">
+        Połączenie:
+        <select class="connect-mode">
+          <option value="auto">automatyczne</option>
+          <option value="direct">bezpośrednie (arkadia.rpg.pl)</option>
+          <option value="proxy">przez proxy</option>
+          <option value="mock">demo bez sieci</option>
+        </select>
+      </label>
+      <button type="button" class="connect-btn">Połącz</button>
+      <p class="connect-status"></p>
+      <p class="connect-credits">
+        Mapa świata: społeczność Arkadii (<a href="https://github.com/Delwing/arkadia-mapa"
+        target="_blank" rel="noopener">Delwing/arkadia-mapa</a>) ·
+        protokół wg <a href="https://github.com/Delwing/arkadia-web-client-extension"
+        target="_blank" rel="noopener">arkadia-web-client-extension</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+/* Podstawy: reset, zmienne, typografia. Ciemny motyw fantasy. */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --bg: #101018;
+  --bg-panel: #16161fdd;
+  --bg-input: #1d1d28;
+  --fg: #c9d1d9;
+  --fg-dim: #8b93a1;
+  --accent: #65d6ff;
+  --accent-warm: #d8b46a;
+  --danger: #cd4444;
+  --border: #2a2a38;
+  --radius: 10px;
+  --kbd-inset: 0px;
+  --mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:active { transform: scale(0.96); }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+input, select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+input:focus, select:focus { outline: 1px solid var(--accent); }

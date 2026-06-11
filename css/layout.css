@@ -1,0 +1,79 @@
+/* Układ mobile-first: pasek górny / scena 3D / konsola / sterowanie. */
+body {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas: "top" "stage" "console" "controls";
+  height: 100dvh;
+  padding-bottom: var(--kbd-inset);
+}
+
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  padding-top: max(6px, env(safe-area-inset-top));
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  z-index: 5;
+}
+
+.stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+}
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.console {
+  grid-area: console;
+  min-height: 0;
+  height: 30dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  transition: height 0.2s ease;
+}
+
+/* Pełnoekranowa konsola: scena schowana, konsola zajmuje całość. */
+body[data-view="console"] .stage { display: none; }
+body[data-view="console"] .console { height: auto; flex: 1; }
+body[data-view="console"] { grid-template-rows: auto 0 1fr auto; }
+
+.controls {
+  grid-area: controls;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+}
+
+/* Ekrany szerokie: konsola jako boczny panel. */
+@media (min-width: 900px) and (orientation: landscape) {
+  body:not([data-view="console"]) {
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "top top"
+      "stage console"
+      "controls controls";
+  }
+  body:not([data-view="console"]) .console {
+    height: auto;
+    border-left: 1px solid var(--border);
+    border-top: none;
+  }
+}
