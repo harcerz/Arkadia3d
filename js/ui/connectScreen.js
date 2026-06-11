@@ -1,6 +1,7 @@
-// Nakładka startowa: wybór trybu połączenia i status.
+// Nakładka startowa: wybór trybu połączenia, dane logowania i status.
 export class ConnectScreen {
-  constructor(root, bus, settings) {
+  /** @param {AutoLogin} autoLogin @param {CharacterCreator} charCreator */
+  constructor(root, bus, settings, autoLogin, charCreator) {
     this.root = root;
     this.bus = bus;
     this.settings = settings;
@@ -9,9 +10,25 @@ export class ConnectScreen {
     this.modeSelect = root.querySelector('.connect-mode');
     this.modeSelect.value = settings.transportMode;
 
+    const nameEl = root.querySelector('.connect-name');
+    const passEl = root.querySelector('.connect-pass');
+    const rememberEl = root.querySelector('.connect-remember-box');
+    nameEl.value = settings.loginName ?? '';
+    passEl.value = settings.loginPass ?? '';
+    rememberEl.checked = Boolean(settings.loginPass);
+
     root.querySelector('.connect-btn').addEventListener('click', () => {
       settings.transportMode = this.modeSelect.value;
+      autoLogin?.arm(nameEl.value, passEl.value, rememberEl.checked);
       bus.emit('user.connect', { mode: this.modeSelect.value });
+    });
+
+    root.querySelector('.connect-new').addEventListener('click', () => {
+      // kreacja przebiega w grze — łączymy się bez auto-loginu i otwieramy kreator
+      settings.transportMode = this.modeSelect.value;
+      autoLogin?.arm(null, null, false);
+      bus.emit('user.connect', { mode: this.modeSelect.value });
+      charCreator?.open();
     });
 
     bus.on('net.status', (s) => this.#onStatus(s));

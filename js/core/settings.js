@@ -4,7 +4,7 @@ const KEY = 'arkadia3d.settings';
 const DEFAULTS = {
   transportMode: 'auto',      // 'auto' | 'direct' | 'proxy'
   lastWorkingMode: null,      // zapamiętany działający tryb przy 'auto'
-  view: 'diorama',            // 'diorama' | 'fpp'
+  view: 'scene',              // 'scene' (pomieszczenie) | 'diorama' (mapa)
   consoleExpanded: false,
   quickButtons: ['spojrz', 'wyjscia', 'zerknij', 'ekwipunek', 'przygotuj sie do walki'],
   commandHistory: [],
@@ -13,7 +13,9 @@ const DEFAULTS = {
 
 function load() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+    const stored = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+    if (stored.view === 'fpp' || stored.view === 'diorama') stored.view = DEFAULTS.view;
+    return stored;
   } catch {
     return { ...DEFAULTS };
   }

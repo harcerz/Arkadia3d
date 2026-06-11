@@ -112,5 +112,43 @@ check('joystick: wektor (0,1) = północ', codeFromVector(0, 1) === 'n');
 check('joystick: wektor (1,-1) = poludniowy-wschod', codeFromVector(1, -1) === 'se');
 check('alias polnoc -> n', LONG_TO_CODE['polnoc'] === 'n');
 
+// --- parser komend ---
+const { CommandParser } = await import('../js/ui/commandParser.js');
+const printed = [];
+const fakeSettings = { aliases: { zs: 'zabij szczura' } };
+const cp = new CommandParser(fakeSettings, {
+  print: (t) => printed.push(t), send: () => {}, connect: () => {}, disconnect: () => {},
+});
+check('parser: sekwencja po średnikach',
+  JSON.stringify(cp.parse('zerknij; n; zabij szczura'))
+    === JSON.stringify(['zerknij', 'polnoc', 'zabij szczura']));
+check('parser: powtórzenie #3',
+  JSON.stringify(cp.parse('#3 pd')) === JSON.stringify(['poludnie', 'poludnie', 'poludnie']));
+check('parser: alias użytkownika z argumentem',
+  JSON.stringify(cp.parse('zs ogonem')) === JSON.stringify(['zabij szczura ogonem']));
+check('parser: skróty polskie pdw -> poludniowy-wschod',
+  JSON.stringify(cp.parse('pdw')) === JSON.stringify(['poludniowy-wschod']));
+check('parser: /pomoc obsłużone lokalnie',
+  cp.parse('/pomoc').length === 0 && printed.some((t) => t.includes('Komendy klienta')));
+check('parser: bezpiecznik powtórzeń (#99 ograniczone do 50)',
+  cp.parse('#99 polnoc').length === 50);
+check('parser: zwykła komenda bez zmian',
+  JSON.stringify(cp.parse('powiedz witajcie wszyscy'))
+    === JSON.stringify(['powiedz witajcie wszyscy']));
+
+// --- odmiana imion w kreatorze ---
+const { declineName } = await import('../js/ui/charCreator.js');
+const m = declineName('Gerald', 'mezczyzna');
+check('odmiana męska: Gerald -> Geralda/Geraldowi/Geraldem/Geraldzie',
+  m.d === 'Geralda' && m.c === 'Geraldowi' && m.n === 'Geraldem' && m.msc === 'Geraldzie',
+  JSON.stringify(m));
+const f = declineName('Milena', 'kobieta');
+check('odmiana żeńska: Milena -> Mileny/Milenie/Milenę-bez-ogonka',
+  f.d === 'Mileny' && f.c === 'Milenie' && f.b === 'Milene' && f.n === 'Milena',
+  JSON.stringify(f));
+const k = declineName('Sarka', 'kobieta');
+check('odmiana żeńska -ka: Sarka -> Sarki/Sarce',
+  k.d === 'Sarki' && k.c === 'Sarce', JSON.stringify(k));
+
 console.log(failures ? `\n${failures} TESTÓW NIE PRZESZŁO` : '\nWszystkie testy przeszły.');
 process.exit(failures ? 1 : 0);

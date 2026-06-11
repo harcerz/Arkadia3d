@@ -9,6 +9,9 @@ import { parseGmcp } from './gmcp/codec.js';
 import { GameState } from './gmcp/state.js';
 import { GameConsole } from './ui/console.js';
 import { CommandInput } from './ui/input.js';
+import { CommandParser } from './ui/commandParser.js';
+import { CharacterCreator } from './ui/charCreator.js';
+import { AutoLogin } from './ui/autoLogin.js';
 import { StatusBars } from './ui/statusBars.js';
 import { QuickButtons } from './ui/quickButtons.js';
 import { ConnectScreen } from './ui/connectScreen.js';
@@ -19,7 +22,10 @@ const $ = (id) => document.getElementById(id);
 
 // --- konsola i wejście ---
 const gameConsole = new GameConsole($('console'), bus);
-const assembler = new LineAssembler((lines) => gameConsole.appendLines(lines));
+const assembler = new LineAssembler((lines) => {
+  gameConsole.appendLines(lines);
+  bus.emit('console.lines', lines); // np. kreator postaci nasłuchuje pytań gry
+});
 const input = new CommandInput($('commandInput'), bus, settings);
 $('sendBtn').addEventListener('click', () => {
   input.submit($('commandInput').value);
@@ -63,8 +69,22 @@ bus.on('net.status', ({ state, mode }) => {
   }
 });
 
+// --- parser komend (aliasy, sekwencje, komendy klienta) ---
+const parser = new CommandParser(settings, {
+  send: (cmd) => bus.emit('user.command', { text: cmd, fromUi: true }),
+  print: (text) => gameConsole.systemMessage(text),
+  connect: () => connection.connect(settings.transportMode),
+  disconnect: () => connection.disconnect(),
+});
+
 // --- komendy gracza (konsola, przyciski, świat 3D) ---
-bus.on('user.command', ({ text, hidden }) => {
+bus.on('user.command', ({ text, hidden, fromUi }) => {
+  if (!hidden && !fromUi) {
+    // tekst z klawiatury przechodzi przez parser; rozwinięcia wracają jako fromUi
+    const expanded = parser.parse(text);
+    for (const cmd of expanded) bus.emit('user.command', { text: cmd, fromUi: true });
+    return;
+  }
   if (!connection.connected) {
     if (text) gameConsole.systemMessage('Brak połączenia — naciśnij „Połącz".');
     return;
@@ -76,11 +96,20 @@ bus.on('user.command', ({ text, hidden }) => {
 // --- HUD i świat ---
 new StatusBars($('statusBars'), bus);
 new QuickButtons($('quickButtons'), bus, settings);
-const connectScreen = new ConnectScreen($('connectScreen'), bus, settings);
-new WorldController($('canvas3d'), bus, settings, $('joystick'), $('location'));
+const autoLogin = new AutoLogin(bus, settings);
+const charCreator = new CharacterCreator(bus, settings);
+const connectScreen = new ConnectScreen($('connectScreen'), bus, settings, autoLogin, charCreator);
+const world = new WorldController($('canvas3d'), bus, settings, $('joystick'), $('location'));
 new ViewToggle($('viewToggle'), bus, settings); // po WorldController — emituje początkowy widok
 
 bus.on('user.connect', ({ mode }) => connection.connect(mode));
+
+// Tap w postać na scenie wypełnia pole komendy (gracz poprawia odmianę).
+bus.on('ui.fillInput', (text) => {
+  const el = $('commandInput');
+  el.value = text;
+  input.focus();
+});
 
 // Toast z komunikatami UI.
 const toast = $('toast');
@@ -98,6 +127,9 @@ if (mockName) {
   connectScreen.hide();
   connection.connect('mock', mockName);
 }
+
+// hak do debugowania i testów e2e
+window.arkadia = { bus, charCreator, settings, world };
 
 // --- PWA ---
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

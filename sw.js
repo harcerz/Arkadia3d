@@ -1,7 +1,7 @@
 // Service worker: szybki start offline. Powłoka aplikacji cache-first,
 // dane krain dociągane i cache'owane w locie. WebSocket nie przechodzi
 // przez SW, więc rozgrywka nie jest dotknięta.
-const VERSION = 'arkadia3d-v1';
+const VERSION = 'arkadia3d-v2';
 
 const SHELL = [
   './',
@@ -28,12 +28,15 @@ const SHELL = [
   './js/ui/quickButtons.js',
   './js/ui/connectScreen.js',
   './js/ui/viewToggle.js',
+  './js/ui/commandParser.js',
+  './js/ui/charCreator.js',
+  './js/ui/autoLogin.js',
   './js/world/moveMapper.js',
   './js/world/mapIndex.js',
   './js/world/areaModel.js',
   './js/world/scene.js',
   './js/world/dioramaView.js',
-  './js/world/fpView.js',
+  './js/world/roomView.js',
   './js/world/daylight.js',
   './js/world/worldController.js',
   './js/vendor/three.module.min.js',

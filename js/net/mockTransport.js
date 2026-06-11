@@ -22,12 +22,17 @@ export class MockSocket {
       return;
     }
     this.readyState = WebSocket.OPEN;
+    this.pendingInputs = 0;
     this.onopen?.();
 
     for (const step of script) {
       if (this.readyState !== WebSocket.OPEN) return;
       if (step.waitForInput) {
-        await new Promise((resolve) => { this.inputResolve = resolve; });
+        if (this.pendingInputs > 0) {
+          this.pendingInputs--; // wejście przyszło zanim zdążyliśmy czekać
+        } else {
+          await new Promise((resolve) => { this.inputResolve = resolve; });
+        }
       }
       if (step.delay) await sleep(step.delay);
       if (step.frame && this.readyState === WebSocket.OPEN) {
@@ -36,11 +41,18 @@ export class MockSocket {
     }
   }
 
-  send(_frame) {
+  send(frame) {
+    // negocjacja telnet / pakiety GMCP (zaczynają się od IAC) nie są
+    // "wejściem gracza" — nie popychają scenariusza
+    try {
+      if (atob(String(frame)).startsWith('\xff')) return;
+    } catch { /* nie-base64: traktuj jak wejście */ }
     if (this.inputResolve) {
       const r = this.inputResolve;
       this.inputResolve = null;
       r();
+    } else {
+      this.pendingInputs++;
     }
   }
 

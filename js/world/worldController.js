@@ -6,7 +6,7 @@ import { MapIndex } from './mapIndex.js';
 import { AreaModel } from './areaModel.js';
 import { SceneManager } from './scene.js';
 import { DioramaView } from './dioramaView.js';
-import { FirstPersonView } from './fpView.js';
+import { RoomView } from './roomView.js';
 import { applyDaylight } from './daylight.js';
 import { commandFor, LONG_TO_CODE } from './moveMapper.js';
 
@@ -32,18 +32,27 @@ export class WorldController {
     this.sm = new SceneManager(canvas);
     this.send = (cmd) => bus.emit('user.command', { text: cmd, fromUi: true });
     this.diorama = new DioramaView(this.sm, this.mapIndex, (room) => this.#onRoomTap(room));
-    this.fp = new FirstPersonView(this.sm, this.mapIndex, this.send, joystickEl);
+    this.roomView = new RoomView(
+      this.sm, this.mapIndex, this.send,
+      (desc) => bus.emit('ui.fillInput', `zerknij na ${desc}`),
+      joystickEl,
+    );
 
     this.area = null;          // AreaModel
     this.currentRoom = null;
+    this.lastInfo = null;      // ostatni gmcp.room.info
     this.lastSentDirection = null;
     this.walkQueue = [];
     this.walkTimer = null;
 
     bus.on('game.room', (e) => this.#onRoom(e));
     bus.on('game.time', (t) => applyDaylight(this.sm, t));
-    bus.on('game.objects', ({ nums }) => {
+    bus.on('game.objects', ({ data, nums }) => {
       this.diorama.updateObjectMarkers(Math.max((nums?.length ?? 1) - 1, 0));
+      const list = Object.values(data ?? {})
+        .filter((o) => o && typeof o.desc === 'string')
+        .map((o) => ({ desc: o.desc }));
+      this.roomView.setObjects(list);
     });
     bus.on('ui.view', (view) => this.#onViewChange(view));
     bus.on('user.command', ({ text }) => this.#trackDirection(text));
@@ -54,21 +63,23 @@ export class WorldController {
 
   #onViewChange(view) {
     this.diorama.setActive(view === 'diorama');
-    this.fp.setActive(view === 'fpp');
+    this.roomView.setActive(view === 'scene');
     this.sm.setPaused(view === 'console');
-    if (view === 'fpp' && this.currentRoom && this.area) {
-      this.fp.setCurrentRoom(this.currentRoom, this.area);
-    }
   }
 
   async #onRoom({ info, hash }) {
     await this.ready;
-    if (this.mapFailed) return;
+    this.lastInfo = info;
+
+    if (this.mapFailed) {
+      this.roomView.setRoom(info, null);
+      return;
+    }
 
     const areaName = info?.map?.name;
     const entry = this.mapIndex.areaByName(areaName);
     if (!entry) {
-      this.#setOffMap(areaName ? `Kraina spoza mapy: ${areaName}` : 'Lokacja poza mapą');
+      this.#setOffMap(areaName ? `Kraina spoza mapy: ${areaName}` : 'Lokacja poza mapą', info);
       return;
     }
 
@@ -79,7 +90,7 @@ export class WorldController {
         this.diorama.setArea(this.area);
       } catch (err) {
         console.error('[world] błąd ładowania krainy:', err);
-        this.#setOffMap('Nie udało się wczytać mapy krainy');
+        this.#setOffMap('Nie udało się wczytać mapy krainy', info);
         return;
       }
     }
@@ -93,8 +104,11 @@ export class WorldController {
     }
     this.lastSentDirection = null;
 
+    // Scena pomieszczenia działa zawsze — wyjścia ma z GMCP, env z mapy.
+    this.roomView.setRoom(info, room);
+
     if (!room) {
-      this.#setOffMap(`${entry.name} — lokacja poza mapą`);
+      this.#setOffMap(`${entry.name} — lokacja poza mapą`, info, /*keepScene*/ true);
       return;
     }
 
@@ -103,14 +117,14 @@ export class WorldController {
     this.locationEl.textContent = entry.name;
     this.locationEl.classList.remove('off-map');
     this.diorama.setCurrentRoom(room, moved);
-    if (this.fp.active) this.fp.setCurrentRoom(room, this.area);
     this.#continueWalk(room);
   }
 
-  #setOffMap(text) {
+  #setOffMap(text, info, keepScene = false) {
     this.locationEl.textContent = text;
     this.locationEl.classList.add('off-map');
     this.#stopWalk();
+    if (!keepScene) this.roomView.setRoom(info, null);
   }
 
   // Tap w dioramie: sąsiad = pojedynczy krok; dalsza lokacja = automarsz BFS.

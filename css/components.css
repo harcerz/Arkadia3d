@@ -174,3 +174,57 @@
 }
 .connect-status { min-height: 1.2em; color: var(--accent-warm); font-size: 0.85rem; }
 .connect-credits { margin-top: 14px; font-size: 0.7rem; color: var(--fg-dim); }
+
+.connect-login {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+.connect-remember { font-size: 0.78rem; color: var(--fg-dim); display: flex; gap: 6px; align-items: center; }
+.connect-new {
+  width: 100%;
+  margin-top: 8px;
+  color: var(--accent-warm);
+}
+
+/* --- kreator postaci --- */
+.cc-card { text-align: left; max-height: 92dvh; overflow-y: auto; }
+.cc-card h2 { margin: 0 0 4px; }
+.cc-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+.cc-grid label, .cc-cases label, .cc-pass-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+}
+.cc-generate { font-size: 1.2rem; padding: 8px 12px; }
+.cc-declension { margin: 10px 0; }
+.cc-declension summary { cursor: pointer; font-size: 0.85rem; color: var(--accent); }
+.cc-cases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.cc-pass-row { margin: 10px 0; }
+.cc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.cc-actions { display: flex; gap: 8px; }
+.cc-actions .cc-start { flex: 1; }
+.cc-log {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 0.75rem;
+  color: var(--fg-dim);
+  max-height: 90px;
+  overflow-y: auto;
+}
+.cc-armed .cc-start { background: var(--accent-warm); }

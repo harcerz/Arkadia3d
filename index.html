@@ -21,14 +21,14 @@
     }
   </script>
 </head>
-<body data-view="diorama">
+<body data-view="scene">
 
   <header class="topbar">
     <div class="location" id="location">Arkadia 3D</div>
     <div class="status-bars" id="statusBars"></div>
     <nav class="view-toggle" id="viewToggle">
-      <button type="button" data-view="diorama" title="Widok izometryczny">◇</button>
-      <button type="button" data-view="fpp" title="Widok pierwszoosobowy">👁</button>
+      <button type="button" data-view="scene" title="Scena lokacji">🧍</button>
+      <button type="button" data-view="diorama" title="Mapa 3D krainy">🗺</button>
       <button type="button" data-view="console" title="Pełna konsola">≣</button>
     </nav>
   </header>
@@ -68,7 +68,18 @@
           <option value="mock">demo bez sieci</option>
         </select>
       </label>
+      <div class="connect-login">
+        <input class="connect-name" placeholder="imię postaci (opcjonalnie)"
+               autocomplete="username" autocapitalize="off">
+        <input class="connect-pass" type="password" placeholder="hasło (opcjonalnie)"
+               autocomplete="current-password">
+        <label class="connect-remember">
+          <input type="checkbox" class="connect-remember-box">
+          zapamiętaj hasło na tym urządzeniu
+        </label>
+      </div>
       <button type="button" class="connect-btn">Połącz</button>
+      <button type="button" class="connect-new">Stwórz nową postać…</button>
       <p class="connect-status"></p>
       <p class="connect-credits">
         Mapa świata: społeczność Arkadii (<a href="https://github.com/Delwing/arkadia-mapa"

@@ -2,6 +2,8 @@
 body {
   display: grid;
   grid-template-rows: auto 1fr auto auto;
+  /* minmax(0,1fr): treść konsoli nie może rozpychać kolumny ponad viewport */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas: "top" "stage" "console" "controls";
   height: 100dvh;
   padding-bottom: var(--kbd-inset);
@@ -64,7 +66,7 @@ body[data-view="console"] { grid-template-rows: auto 0 1fr auto; }
 /* Ekrany szerokie: konsola jako boczny panel. */
 @media (min-width: 900px) and (orientation: landscape) {
   body:not([data-view="console"]) {
-    grid-template-columns: 1fr 420px;
+    grid-template-columns: minmax(0, 1fr) 420px;
     grid-template-rows: auto 1fr auto;
     grid-template-areas:
       "top top"

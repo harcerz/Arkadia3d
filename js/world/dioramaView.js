@@ -52,7 +52,14 @@ export class DioramaView {
   setActive(active) {
     this.group.visible = active;
     this.controls.enabled = active;
-    if (active) this.sm.invalidate();
+    if (active) {
+      // wracając na mapę: kamera nad awatarem (scena pokoju mogła ją przestawić)
+      const target = this.avatar.position.clone();
+      this.controls.target.copy(target);
+      this.sm.camera.position.copy(target.clone().add(new THREE.Vector3(8, 11, 8)));
+      this.controls.update();
+      this.sm.invalidate();
+    }
   }
 
   get active() {
@@ -90,7 +97,13 @@ export class DioramaView {
   /** Przenosi awatar (i kamerę) na lokację; animowane przy ruchu. */
   setCurrentRoom(room, animate = true) {
     const target = toScene(room).add(new THREE.Vector3(0, tileHeight + 0.45, 0));
-    if (!animate || !this.group.visible) {
+    if (!this.group.visible) {
+      // widok nieaktywny: nie wolno ruszać wspólnej kamery
+      this.avatar.position.copy(target);
+      this.objectMarkers.position.copy(target);
+      return;
+    }
+    if (!animate) {
       this.avatar.position.copy(target);
       this.#panCameraTo(target, false);
       this.sm.invalidate();

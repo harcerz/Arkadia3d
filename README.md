@@ -7,12 +7,24 @@ smartfony i hostowanie na **GitHub Pages**.
 
 ## Co potrafi
 
-- **Diorama 3D** — izometryczna makieta krainy zbudowana ze społecznościowej
-  mapy (~27 000 lokacji): kafelki kolorowane środowiskiem, łączniki wyjść,
-  poziomy pionowe, etykiety. Tapnięcie sąsiedniej lokacji = krok; tapnięcie
-  dalszej = automatyczny marsz (BFS po znanej mapie).
-- **Widok pierwszoosobowy (FPP)** — proceduralne wnętrza bieżącej lokacji
-  z portalami wyjść i wirtualnym joystickiem.
+- **Scena lokacji** (domyślny widok) — wizualizacja tego, co opisuje tekst:
+  plac/pomieszczenie stylizowane środowiskiem (miasto, las, woda, jaskinia),
+  figurki postaci i stworzeń obecnych na lokacji (z `gmcp.objects`)
+  z podpisami, bramy wyjść z kierunkami (tap = ruch), schody w górę/dół,
+  wirtualny joystick. Tap w postać podpowiada komendę `zerknij na …`.
+- **Mapa 3D krainy** — izometryczna makieta ze społecznościowej mapy
+  (~27 000 lokacji): kafelki kolorowane środowiskiem, łączniki wyjść,
+  poziomy pionowe. Tapnięcie sąsiedniej lokacji = krok; dalszej =
+  automatyczny marsz (BFS po znanej mapie).
+- **Kreator postaci** — formularz imienia (z generatorem i automatyczną
+  odmianą przez przypadki — do sprawdzenia!), płci i hasła; rozpoznaje
+  pytania gry po słowach kluczowych i odpowiada za gracza, a każdą
+  odpowiedź można też wysłać ręcznie chipem.
+- **Parser komend** — sekwencje po `;`, powtórzenia `#3 polnoc`, skróty
+  kierunków (`n`, `pdw`, `pnz`…), własne aliasy (`/alias zs=zabij szczura`),
+  komendy klienta `/pomoc`, `/aliasy`, `/polacz`, `/rozlacz`.
+- **Automatyczne logowanie** — imię wysyłane po połączeniu, hasło dokładnie
+  wtedy, gdy serwer włączy tryb hasła (telnet ECHO); opcjonalne zapamiętanie.
 - **Pełny klient MUD** — konsola z kolorami ANSI, historia komend, tryb hasła,
   paski stanu postaci (kondycja, zmęczenie, mana…), szybkie przyciski komend.
 - **Pozycjonowanie przez GMCP** — gra sama melduje współrzędne lokacji
@@ -74,8 +86,10 @@ tylko krainę, w której jesteś.
 ```
 js/net/    transport (kodeki base64/binary), telnet, składanie linii, połączenie
 js/gmcp/   kodek i stan gry (GMCP)
-js/ui/     konsola ANSI, wejście, paski stanu, przyciski, ekrany
-js/world/  mapa, model krainy, scena Three.js, diorama, FPP, światło dobowe
+js/ui/     konsola ANSI, wejście, parser komend, kreator postaci, auto-login,
+           paski stanu, przyciski, ekrany
+js/world/  mapa, model krainy, scena Three.js, widok lokacji (roomView),
+           diorama, światło dobowe
 data/      przetworzona mapa świata (generowana przez tools/)
 tools/     skrypty: mapa, ikony, transkrypt demo
 test/      testy Node + przeglądarkowe + transkrypty

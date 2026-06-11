@@ -71,3 +71,85 @@ push(200, msg('combat.avatar',
 await mkdir(OUT, { recursive: true });
 await writeFile(join(OUT, 'login.json'), JSON.stringify(frames, null, 1));
 console.log(`OK: ${frames.length} kroków -> test/transcripts/login.json`);
+
+// ---------------------------------------------------------------------------
+// create.json — kreacja postaci + fragment rozgrywki (spacer, handel, walka)
+frames.length = 0;
+
+const ask = (text) => push(250, utf8bytes(text) + IAC + GA);
+
+push(200, utf8bytes(`${ESC}[1;36m        A R K A D I A${ESC}[0m\n`
+  + `${ESC}[33m  Świat Wiedźmina i Warhammera${ESC}[0m\n\n`) + IAC + WILL + GMCP);
+ask("Kim jesteś? Podaj imię postaci (lub wpisz 'nowa'): ");
+wait(); // gracz: nowa
+ask('Podaj imię nowej postaci: ');
+wait(); // imię
+ask('Podaj dopełniacz imienia (kogo? czego?): ');
+wait();
+ask('Podaj celownik imienia (komu? czemu?): ');
+wait();
+ask('Podaj biernik imienia (kogo? co?): ');
+wait();
+ask('Podaj narzędnik imienia (z kim? z czym?): ');
+wait();
+ask('Podaj miejscownik imienia (o kim? o czym?): ');
+wait();
+ask('Podaj płeć (kobieta/mezczyzna): ');
+wait();
+push(250, IAC + WILL + ECHO + utf8bytes('Wybierz hasło dla postaci: ') + IAC + GA);
+wait();
+push(200, IAC + WONT + ECHO + '\n' + IAC + WILL + ECHO
+  + utf8bytes('Powtórz hasło: ') + IAC + GA);
+wait();
+push(200, IAC + WONT + ECHO + '\n');
+
+// narodziny postaci na placu Wyzimy (prawdziwa lokacja 1286)
+push(300, msg('system.login', 'Postać gotowa. Witaj w Arkadii!\n'));
+push(150, gmcp('char.state', { hp: 7, fatigue: 1, mana: 3, stuffed: 3, soaked: 3, form: 3, improve: 0 }));
+push(100, roomInfo(63, 92, 0, { northeast: 1, southeast: 1, south: 1 }));
+push(120, msg('combat.avatar',
+  `${ESC}[32mStoisz na brukowanym placu Wyzimy. Strażnik przygląda Ci się podejrzliwie,`
+  + ` a krępy kupiec zachwala towary.${ESC}[0m\n`));
+push(100, gmcp('objects.nums', [1, 2, 3]));
+push(100, gmcp('objects.data', {
+  1: { desc: 'krępy kupiec' },
+  2: { desc: 'strażnik miejski' },
+  3: { desc: 'ogromny szczur' },
+}));
+push(100, gmcp('room.time', { hour: 11 }));
+
+// spacer na południowy-wschód
+wait();
+push(350, roomInfo(67, 96, 0, { northwest: 1, south: 1 })
+  + msg('combat.avatar', 'Skręcasz w wąską uliczkę przy murach.\n'));
+push(80, gmcp('objects.nums', [3]));
+push(80, gmcp('objects.data', { 3: { desc: 'ogromny szczur' } }));
+push(80, gmcp('char.state', { fatigue: 2 }));
+
+// walka ze szczurem
+wait(); // gracz: zabij szczura
+push(300, msg('combat.avatar',
+  `${ESC}[31mOgromny szczur rzuca się na Ciebie z piskiem!${ESC}[0m\n`));
+push(700, msg('combat.avatar',
+  `${ESC}[31mSzczur boleśnie kąsa Cię w łydkę.${ESC}[0m\n`));
+push(80, gmcp('char.state', { hp: 5 }));
+push(700, msg('combat.avatar',
+  `${ESC}[33mTrafiasz szczura solidnym kopniakiem.${ESC}[0m\n`));
+push(700, msg('combat.avatar',
+  `${ESC}[1;32mOgromny szczur pada martwy u Twoich stóp!${ESC}[0m\n`));
+push(80, gmcp('objects.nums', []));
+push(80, gmcp('objects.data', {}));
+push(80, gmcp('char.state', { hp: 6, improve: 2 }));
+push(400, msg('combat.avatar',
+  `${ESC}[38;5;114mCzujesz, że to starcie czegoś Cię nauczyło.${ESC}[0m\n`));
+
+// powrót na plac o zmierzchu
+wait();
+push(350, roomInfo(63, 92, 0, { northeast: 1, southeast: 1, south: 1 })
+  + msg('combat.avatar', 'Wracasz na plac. Targowisko powoli pustoszeje.\n'));
+push(80, gmcp('objects.nums', [1, 2]));
+push(80, gmcp('objects.data', { 1: { desc: 'krępy kupiec' }, 2: { desc: 'strażnik miejski' } }));
+push(200, gmcp('room.time', { hour: 20 }));
+
+await writeFile(join(OUT, 'create.json'), JSON.stringify(frames, null, 1));
+console.log(`OK: ${frames.length} kroków -> test/transcripts/create.json`);
