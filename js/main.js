@@ -53,7 +53,7 @@ const telnet = new TelnetParser({
 
 bus.on('net.bytes', (bytes) => telnet.feed(bytes));
 
-bus.on('net.status', ({ state, mode }) => {
+bus.on('net.status', ({ state, mode, detail }) => {
   if (state === 'connecting') {
     telnet.reset();
     assembler.reset();
@@ -63,6 +63,9 @@ bus.on('net.status', ({ state, mode }) => {
       ? '— Tryb demo: odtwarzam nagrany zapis gry —'
       : '— Połączono z Arkadią —');
     input.focus();
+  } else if (state === 'reconnecting') {
+    assembler.flushAll();
+    bus.emit('ui.toast', `Połączenie przerwane — wznawiam za ${detail}…`);
   } else if (state === 'closed') {
     assembler.flushAll();
     gameConsole.systemMessage('— Rozłączono —');
@@ -129,7 +132,7 @@ if (mockName) {
 }
 
 // hak do debugowania i testów e2e
-window.arkadia = { bus, charCreator, settings, world };
+window.arkadia = { bus, charCreator, settings, world, autoLogin, connection };
 
 // --- PWA ---
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

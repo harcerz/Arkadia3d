@@ -17,6 +17,8 @@ export class CommandInput {
 
     input.addEventListener('keydown', (e) => this.#onKey(e));
     bus.on('telnet.echo', (h) => this.setHidden(h));
+    // tryb hasła wykryty po tekście promptu (endpoint bez telnetowego ECHO)
+    bus.on('ui.passwordMode', (h) => this.setHidden(h));
 
     // iOS/Android: klawiatura ekranowa zmienia visualViewport — dosuwamy layout.
     if (window.visualViewport) {

@@ -19,6 +19,26 @@ export class Connection {
     this.receivedAnything = false;
     this.pingTimer = null;
     this.manualClose = false;
+
+    // automatyczne wznawianie po zerwaniu (np. telefon ubił socket w tle)
+    this.wantConnected = false; // czy użytkownik chce być połączony
+    this.reconnectTimer = null;
+    this.reconnectAttempts = 0;
+
+    // powrót do aplikacji / odzyskanie sieci -> natychmiastowa próba wznowienia
+    const wake = () => {
+      if (this.wantConnected && !this.connected && !this.reconnectTimer) {
+        this.reconnectAttempts = 0;
+        this.#reconnectNow();
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', wake);
+      window.addEventListener('focus', wake);
+    }
   }
 
   get connected() {
@@ -29,6 +49,10 @@ export class Connection {
   connect(mode = 'auto', mockName = 'login') {
     this.disconnect(true);
     this.manualClose = false;
+    this.lastUserMode = mode;
+    this.wantConnected = mode !== 'mock';
+    this.reconnectAttempts = 0;
+    this.#clearReconnect();
 
     if (mode === 'mock') return this.#dial('mock', mockName);
     if (mode === 'auto') {
@@ -39,6 +63,10 @@ export class Connection {
   }
 
   disconnect(silent = false) {
+    if (!silent) {
+      this.wantConnected = false;
+      this.#clearReconnect();
+    }
     this.manualClose = true;
     this.#stopPing();
     if (this.socket) {
@@ -96,6 +124,7 @@ export class Connection {
 
     socket.onopen = () => {
       if (this.socket !== socket) return;
+      this.reconnectAttempts = 0;
       this.#status('open', mode);
     };
     socket.onmessage = (event) => {
@@ -117,13 +146,49 @@ export class Connection {
       if (this.receivedAnything && !this.manualClose) {
         this.settings.lastWorkingMode = mode === 'mock' ? null : mode;
       }
-      this.#status('closed', mode);
+      // Zerwane mimo woli -> wznawiaj zamiast pokazywać ekran połączenia.
+      const willReconnect = !this.manualClose && this.wantConnected && mode !== 'mock';
+      if (willReconnect) this.#scheduleReconnect();
+      else this.#status('closed', mode);
     };
   }
 
   #failed(mode, allowFallback, detail) {
     if (allowFallback && mode === 'direct') return this.#dial('proxy');
+    if (this.wantConnected) return this.#scheduleReconnect();
     this.#status('error', mode, detail);
+  }
+
+  #scheduleReconnect() {
+    this.#clearReconnect();
+    this.reconnectAttempts++;
+    if (this.reconnectAttempts > 8) {
+      // serwer naprawdę niedostępny — oddaj sterowanie użytkownikowi
+      this.#status('closed', this.mode);
+      return;
+    }
+    const delay = Math.min(1000 * 2 ** (this.reconnectAttempts - 1), 15000);
+    this.#status('reconnecting', this.mode, `${Math.round(delay / 1000)}s`);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.#reconnectNow();
+    }, delay);
+  }
+
+  #reconnectNow() {
+    if (!this.wantConnected || this.connected) return;
+    this.manualClose = false;
+    const preferred = this.settings.lastWorkingMode ?? this.lastUserMode ?? 'direct';
+    if (preferred === 'auto') {
+      this.#dial(this.settings.lastWorkingMode ?? 'direct', null, true);
+    } else {
+      this.#dial(preferred, null, /*allowFallback*/ preferred === 'direct');
+    }
+  }
+
+  #clearReconnect() {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
   }
 
   #status(state, mode = this.mode, detail = '') {

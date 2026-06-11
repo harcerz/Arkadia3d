@@ -153,3 +153,27 @@ push(200, gmcp('room.time', { hour: 20 }));
 
 await writeFile(join(OUT, 'create.json'), JSON.stringify(frames, null, 1));
 console.log(`OK: ${frames.length} kroków -> test/transcripts/create.json`);
+
+// ---------------------------------------------------------------------------
+// real.json — odwzorowanie prawdziwego endpointu: logowanie e-mailem,
+// hasło jako zwykły tekst (BEZ telnetowego ECHO). Sprawdza auto-login,
+// wykrywanie promptu hasła po tekście i maskowanie.
+frames.length = 0;
+push(200, utf8bytes(`${ESC}[1;36m        Witaj w swiecie Arkadii${ESC}[0m\n\n`
+  + 'Aby zalogowac sie na swoje konto lub jesli jeszcze go nie masz'
+  + ' - podaj adres email.\n') + IAC + WILL + GMCP);
+push(150, utf8bytes('Aby zalogowac sie na istniejaca postac - podaj jej imie.\n'));
+push(120, utf8bytes('> ') + IAC + GA);
+wait(); // auto: e-mail
+push(300, utf8bytes('Witaj. Podaj swoje haslo:\n') + IAC + GA);
+wait(); // auto: hasło (bez ECHO — wykryte po tekście)
+push(300, msg('system.login', 'Zalogowano. Witaj ponownie!\n'));
+push(120, gmcp('char.state', { hp: 7, fatigue: 2, mana: 6 }));
+push(100, roomInfo(63, 92, 0, { northeast: 1, southeast: 1, south: 1 }));
+push(120, msg('combat.avatar',
+  `${ESC}[32mStoisz na brukowanym placu Wyzimy.${ESC}[0m\n`));
+push(100, gmcp('objects.nums', [1]));
+push(100, gmcp('objects.data', { 1: { desc: 'strażnik miejski' } }));
+push(100, gmcp('room.time', { hour: 13 }));
+await writeFile(join(OUT, 'real.json'), JSON.stringify(frames, null, 1));
+console.log(`OK: ${frames.length} kroków -> test/transcripts/real.json`);

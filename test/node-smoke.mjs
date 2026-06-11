@@ -150,5 +150,40 @@ const k = declineName('Sarka', 'kobieta');
 check('odmiana żeńska -ka: Sarka -> Sarki/Sarce',
   k.d === 'Sarki' && k.c === 'Sarce', JSON.stringify(k));
 
+// --- automatyczne wznawianie połączenia (atrapa WebSocketu) ---
+class FakeWS {
+  constructor(url) { this.url = url; this.readyState = 0; FakeWS.last = this; }
+  close() { this.readyState = 3; this.onclose?.({}); }
+}
+FakeWS.OPEN = 1;
+globalThis.WebSocket = FakeWS;
+globalThis.document = { hidden: false, addEventListener() {} };
+globalThis.window = { addEventListener() {} };
+
+const { Connection } = await import('../js/net/connection.js');
+const { EventBus } = await import('../js/core/eventBus.js');
+{
+  const b = new EventBus();
+  const events = [];
+  b.on('net.status', (s) => events.push(s.state));
+  const conn = new Connection(b, { lastWorkingMode: null });
+
+  conn.connect('direct');
+  const sock = FakeWS.last;
+  sock.readyState = FakeWS.OPEN;
+  sock.onopen();
+  sock.onmessage({ data: btoa('cokolwiek') }); // coś przyszło
+  check('wznawianie: po otwarciu wantConnected=true', conn.wantConnected === true);
+
+  sock.onclose(); // zerwane mimo woli
+  check('wznawianie: zerwanie planuje reconnect (status reconnecting, nie closed)',
+    events.includes('reconnecting') && !events.includes('closed'), events.join(','));
+  check('wznawianie: zaplanowano timer ponowienia', conn.reconnectTimer !== null);
+
+  conn.disconnect(); // ręczne rozłączenie zatrzymuje wznawianie
+  check('wznawianie: ręczny disconnect kasuje timer i wantConnected',
+    conn.reconnectTimer === null && conn.wantConnected === false);
+}
+
 console.log(failures ? `\n${failures} TESTÓW NIE PRZESZŁO` : '\nWszystkie testy przeszły.');
 process.exit(failures ? 1 : 0);
