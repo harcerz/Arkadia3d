@@ -91,6 +91,11 @@
 
 .input-row { display: flex; gap: 6px; }
 .input-row input { flex: 1; font-family: var(--mono); }
+/* maskowanie hasła bez type=password (Enter na mobile działa normalnie) */
+.input-row input.masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
 #sendBtn { flex-shrink: 0; color: var(--accent); }
 
 /* --- joystick (tryb FPP) --- */

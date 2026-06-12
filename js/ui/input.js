@@ -1,5 +1,12 @@
-// Linia komend: historia, tryb hasła (telnet ECHO), klawiatura mobilna.
+// Linia komend: historia, tryb hasła (maskowanie), klawiatura mobilna.
 import { CONFIG } from '../config.js';
+
+// type="password" na mobile bywa przechwytywany przez menedżera haseł /
+// klawiaturę ekranową (Enter nie wysyła komendy). Dlatego maskujemy SAM
+// WYGLĄD znaków przez CSS, zostawiając <input type="text"> — wtedy Enter
+// działa tak samo jak w zwykłym polu. type="password" tylko awaryjnie.
+const SUPPORTS_TEXT_SECURITY = typeof CSS !== 'undefined' && CSS.supports
+  && (CSS.supports('-webkit-text-security', 'disc') || CSS.supports('text-security', 'disc'));
 
 export class CommandInput {
   /**
@@ -34,7 +41,13 @@ export class CommandInput {
 
   setHidden(hidden) {
     this.hidden = hidden;
-    this.input.type = hidden ? 'password' : 'text';
+    if (SUPPORTS_TEXT_SECURITY) {
+      this.input.type = 'text';
+      this.input.classList.toggle('masked', hidden);
+    } else {
+      this.input.type = hidden ? 'password' : 'text';
+    }
+    this.input.setAttribute('autocomplete', 'off');
     this.input.placeholder = hidden ? 'hasło…' : 'wpisz komendę…';
   }
 
